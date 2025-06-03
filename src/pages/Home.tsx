@@ -1,6 +1,8 @@
+import ContainerScroller from "../components/ContainerScroller";
+
 function Home() {
     return (
-        <h1>Home</h1>
+        <ContainerScroller />
     );
 }
 
