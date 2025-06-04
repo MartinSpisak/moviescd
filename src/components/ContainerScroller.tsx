@@ -1,20 +1,47 @@
-import { Container, Grid } from "@mui/material";
+import { Box, Button, Container, Grid, Typography } from "@mui/material";
 import MovieCard from "./MovieCard";
-import { useQuery } from "@tanstack/react-query";
-import { Movies } from "../types/Movies";
+import {
+  InfiniteData,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
+import { MovieResponse, Movies } from "../types/Movies";
+import { useSearchStore } from "../stores/SearchStore";
 
 const apikey = process.env.REACT_APP_API_KEY;
 
-console.log(apikey);
-
 function ContainerScroller() {
-  const { data, isLoading, error } = useQuery<Movies>({
-    queryKey: ["movies"],
-    queryFn: () => fetch(`https://www.omdbapi.com/?s=Avenger&apikey=${apikey}`).then((res) => res.json()),
-  });
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
+  const { search } = useSearchStore();
+  console.log(search);
+  const request = async ({ pageParam = 1 }: { pageParam: number }) => {
+    const response = await fetch(
+      `https://www.omdbapi.com/?s=${search}&page=${pageParam}&apikey=${apikey}`
+    );
+    const data = await response.json();
+    return data;
+  };
+
+  const { data, isLoading, error, hasNextPage, fetchNextPage, isFetchingNextPage } =
+    useInfiniteQuery<MovieResponse, Error, InfiniteData<MovieResponse>, ["movies", string], number>({
+      queryKey: ["movies", search],
+      queryFn: request,
+      initialPageParam: 1,
+      getNextPageParam: (lastPage, _, lastPageParam) => {
+        if (lastPage.Response === "True") {
+          return Number(lastPage.totalResults) > lastPage.Search?.length * lastPageParam
+            ? lastPageParam + 1
+            : undefined;
+        }
+        return undefined;
+      },
+    });
+
+  if (search === "" || search === undefined || search === null || search.length < 3) {
+    return <div>Search for a movie</div>;
+  }
+  if (isLoading) return <div><Typography variant="h6">Loading...</Typography></div>;
+  if (error) return <div><Typography variant="h6">Error: {error.message}</Typography></div>;
+  if (data?.pages[0].Response === "False") return <div><Typography variant="h6">Error: {data?.pages[0].Error}</Typography></div>;
 
   return (
     <Container
@@ -28,15 +55,21 @@ function ContainerScroller() {
       }}
     >
       <Grid container spacing={2}>
-        {data?.Search.map((movie) => (
+        {data?.pages.map((page) => (page as Movies).Search).flat().map((movie) => (
           <MovieCard
             key={movie.imdbID}
-            title={movie.Title}
-            description={`${movie.Type} - ${movie.Year} - ${movie.imdbID}`}
-            img={movie.Poster}
+            title={movie.Title || ""}
+            description={`${movie.Year || ""} ${movie.Type || ""}`}
+            img={movie.Poster === "N/A" ? "/movie.jpg" : movie.Poster}
           />
         ))}
       </Grid>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight={100} gap={2}>
+      {hasNextPage && !isFetchingNextPage && (
+        <Button onClick={() => fetchNextPage()} color="primary" variant="contained">Load More</Button>
+      )}
+      {isFetchingNextPage && <Typography variant="h6">Loading...</Typography>}
+      </Box>
     </Container>
   );
 }

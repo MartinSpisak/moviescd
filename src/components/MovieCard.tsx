@@ -42,6 +42,7 @@ function MovieCard(props: MovieType) {
               component="img"
               alt="green iguana"
               image={props.img}
+              onError={(e) => (e.currentTarget.src = "/movie.jpg")}
               sx={{
                 height: { sm: 'auto', md: '50%' },
                 aspectRatio: { sm: '16 / 9', md: '' },
