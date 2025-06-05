@@ -3,7 +3,7 @@ import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import "./App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Details from "./pages/Details";
 import Favorites from "./pages/Favorites";
 import NavigationBar from "./components/NavigationBar";
@@ -12,6 +12,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import { createTheme } from "@mui/material/styles";
 import { Container } from "@mui/material";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useLocation } from "react-router-dom";
 
 const theme = createTheme({
   palette: {
@@ -26,21 +27,23 @@ const theme = createTheme({
 });
 
 function App() {
+  const location = useLocation();
   const queryClient = new QueryClient();
   return (
     <QueryClientProvider client={queryClient}>
-    <ThemeProvider theme={theme}>
-      <BrowserRouter>
+      <ThemeProvider theme={theme}>
         <NavigationBar />
         <Container sx={{ maxWidth: "1200px", margin: "auto" }}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/movie/:id" element={<Details />} />
-            <Route path="/favorites" element={<Favorites />} />
+            <Route
+              path="/favorites"
+              element={<Favorites key={location.pathname} />}
+            />
           </Routes>
         </Container>
-      </BrowserRouter>
-    </ThemeProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

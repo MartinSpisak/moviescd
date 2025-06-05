@@ -3,7 +3,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { useSearchStore } from "../stores/SearchStore";
 import { useEffect, useState } from "react";
 
-// MUI example search bar
+// Those components are based on MUI example search bar
 const SearchBar = styled("div")(({ theme }) => ({
   position: "relative",
   borderRadius: theme.shape.borderRadius,
